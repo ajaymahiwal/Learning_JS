@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TODO</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+      }
+      #container {
+        width: 100%;
+        height: 100%;
+        font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+          "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+      }
+      #new-task {
+        width: 100%;
+        height: 300px;
+      }
+      #new-task h1 {
+        text-align: center;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+      }
+      form > * {
+        width: 50%;
+      }
+      input,
+      textarea {
+        font-size: 1.1rem;
+        margin-top: 5px;
+        padding: 5px;
+        border-radius: 10px;
+        border: 2px solid black;
+      }
+      #task-description {
+        height: 200px;
+      }
+      #save-btn {
+        border: none;
+        border-radius: 10px;
+        padding: 5px 20px;
+        margin-top: 1vw;
+        width: 10vw;
+        font-size: 1.1rem;
+        background-color: rgb(37, 99, 1);
+        color: white;
+        cursor: pointer;
+      }
+
+      #task-dashboard {
+        margin-top: 3vw;
+        width: 100%;
+        /* background-color: blueviolet; */
+        /* height: 400px; */
+        display: flex;
+        justify-content: space-around;
+      }
+      #task-dashboard > * {
+        width: 100%;
+        /* height: 100%; */
+        border: 2px solid red;
+      }
+      .section-heading {
+        text-align: center;
+      }
+
+      #task-dashboard ul {
+        border: 2px solid red;
+        display: flex;
+        justify-content: start;
+        flex-wrap: wrap;
+      }
+      #task-dashboard ul li {
+        list-style: none;
+        width: 20%;
+        height: 100px;
+        border: 2px solid red;
+        text-align: center;
+        /* margin-left: 3vw; */
+      }
+
+      #upcoming-task {
+        margin-top: 3vw;
+        background-color: blueviolet;
+        width: 100%;
+        height: 500px;
+      }
+
+      #show-task-popup {
+        background-color: bisque;
+        width: 300px;
+        height: 300px;
+        position: absolute;
+        z-index: 1;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        padding: 2vw;
+      }
+      .hidden {
+        display: none;
+      }
+      #close-popup {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div id="new-task">
+        <h1>New Task</h1>
+        <form action="/new-task" id="new-task-form">
+          <input
+            type="text"
+            name=""
+            id="task-name"
+            placeholder="Enter Task Name"
+            required
+          />
+          <textarea
+            name=""
+            id="task-description"
+            placeholder="Enter Task Description"
+            required
+          ></textarea>
+          <button id="save-btn" type="submit">Save</button>
+        </form>
+      </div>
+
+      <div id="task-dashboard"></div>
+
+      <div id="show-task-popup" class="hidden">
+        <button id="close-popup">close</button>
+        <h3 id="task-title-popup"></h3>
+        <p id="task-description-popup"></p>
+      </div>
+    </div>
+
+    <script>
+      let taskForm = document.getElementById("new-task-form");
+      let taskName = document.getElementById("task-name");
+      let taskDescription = document.getElementById("task-description");
+      let all_todos = JSON.parse(localStorage.getItem("all_todos")) || [];
+
+      taskForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        addToTodo(taskName.value, taskDescription.value);
+        loadTheTodo();
+      });
+
+      function addToTodo(name, description) {
+        let task_id = Math.random().toString(36).substr(2, 9);
+
+        let todo = {
+          id: task_id,
+          name: name,
+          description: description,
+        };
+
+        all_todos.push(task_id); // add id into the one place
+        localStorage.setItem(task_id, JSON.stringify(todo)); // save the todo also
+
+        localStorage.setItem("all_todos", JSON.stringify(all_todos));
+      }
+
+      function loadTheTodo() {
+        let ul = document.createElement("ul");
+
+        let all_todos = JSON.parse(localStorage.getItem("all_todos")) || [];
+
+        all_todos.forEach((todo) => {
+          let div = document.createElement("div");
+          let li = document.createElement("li");
+          let h2 = document.createElement("h2");
+
+          let show_btn = document.createElement("button");
+          show_btn.innerText = "Show Task";
+          show_btn.classList.add("show-task-btn");
+          show_btn.setAttribute("task-id", todo);
+
+          let delete_btn = document.createElement("button");
+          delete_btn.innerText = "Delete Task";
+          delete_btn.classList.add("delete-task-btn");
+          delete_btn.setAttribute("task-id", todo);
+
+          h2.innerText = todo;
+
+          div.append(show_btn, delete_btn);
+          li.append(h2, div);
+          ul.appendChild(li);
+        });
+        let task_dashboard = document.getElementById("task-dashboard");
+        task_dashboard.innerHTML = "";
+        task_dashboard.appendChild(ul);
+
+        let all_del_btn = document.getElementsByClassName("delete-task-btn");
+        console.log(all_del_btn);
+
+        for (let i = 0; i < all_del_btn.length; i++) {
+          let btn = all_del_btn[i];
+          // console.log(btn)
+          btn.addEventListener("click", () => {
+            let task_id = btn.getAttribute("task-id");
+            localStorage.removeItem(task_id);
+
+            let all_todos = JSON.parse(localStorage.getItem("all_todos")) || [];
+            all_todos = all_todos.filter((id) => id != task_id);
+
+            localStorage.setItem("all_todos", JSON.stringify(all_todos));
+            loadTheTodo();
+          });
+        }
+
+        let show_all_btn = document.getElementsByClassName("show-task-btn");
+        console.log(show_all_btn);
+
+        for (let i = 0; i < show_all_btn.length; i++) {
+          let btn = show_all_btn[i];
+
+          btn.addEventListener("click", () => {
+            let task_id = btn.getAttribute("task-id");
+            let task = JSON.parse(localStorage.getItem(task_id));
+
+            console.log(task);
+            let task_title = document.getElementById("task-title-popup");
+            task_title.innerText = task.name;
+            let task_description = document.getElementById(
+              "task-description-popup"
+            );
+            task_description.innerText = task.description;
+
+            let show_task_popup = document.getElementById("show-task-popup");
+            show_task_popup.classList.remove("hidden");
+          });
+        }
+      }
+
+      document.getElementById("close-popup").addEventListener("click", () => {
+        let show_task_popup = document.getElementById("show-task-popup");
+        show_task_popup.classList.add("hidden");
+      });
+
+      window.onload = () => {
+        loadTheTodo();
+      };
+    </script>
+  </body>
+</html>
